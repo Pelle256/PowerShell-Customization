@@ -5,8 +5,30 @@ param(
   [string]$FastfetchConfigPath,
   [string]$LogoPath,
   [ValidateSet('Windows', 'Linux')]
-  [string]$Platform
+  [string]$Platform,
+  [switch]$LoadNow
 )
+
+Write-Host ""
+Write-Host "           ██████╗  ██████╗ ██╗    ██╗███████╗██████╗ ███████╗██╗  ██╗███████╗██╗     ██╗               " -ForegroundColor Cyan
+Write-Host "           ██╔══██╗██╔═══██╗██║    ██║██╔════╝██╔══██╗██╔════╝██║  ██║██╔════╝██║     ██║               " -ForegroundColor Cyan
+Write-Host "           ██████╔╝██║   ██║██║ █╗ ██║█████╗  ██████╔╝███████╗███████║█████╗  ██║     ██║               " -ForegroundColor Cyan
+Write-Host "           ██╔═══╝ ██║   ██║██║███╗██║██╔══╝  ██╔══██╗╚════██║██╔══██║██╔══╝  ██║     ██║               " -ForegroundColor Cyan
+Write-Host "           ██║     ╚██████╔╝╚███╔███╔╝███████╗██║  ██║███████║██║  ██║███████╗███████╗███████╗          " -ForegroundColor Cyan
+Write-Host "           ╚═╝      ╚═════╝  ╚══╝╚══╝ ╚══════╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚══════╝╚══════╝╚══════╝          " -ForegroundColor Cyan
+Write-Host ""
+Write-Host " ██████ ██    ██ ███████ ████████  ██████  ███    ███ ██ ███████  █████  ████████ ██  ██████  ███    ██ " -ForegroundColor DarkMagenta
+Write-Host "██      ██    ██ ██         ██    ██    ██ ████  ████ ██    ███  ██   ██    ██    ██ ██    ██ ████   ██ " -ForegroundColor DarkMagenta
+Write-Host "██      ██    ██ ███████    ██    ██    ██ ██ ████ ██ ██   ███   ███████    ██    ██ ██    ██ ██ ██  ██ " -ForegroundColor DarkMagenta
+Write-Host "██      ██    ██      ██    ██    ██    ██ ██  ██  ██ ██  ███    ██   ██    ██    ██ ██    ██ ██  ██ ██ " -ForegroundColor DarkMagenta
+Write-Host " ██████  ██████  ███████    ██     ██████  ██      ██ ██ ███████ ██   ██    ██    ██  ██████  ██   ████ " -ForegroundColor DarkMagenta
+Write-Host "                                                                                                        " -ForegroundColor DarkMagenta
+Write-Host "========================================================================================================" -ForegroundColor DarkMagenta
+Write-Host ""
+Write-Host "By Pelle Schulte (@Pelle256 on GitHub)" -ForegroundColor Red -NoNewline
+Write-Host " - https://short.pellesnium.com/github" -ForegroundColor DarkGray
+Write-Host "GitHub repository: Pelle256/PowerShell-Customization" -ForegroundColor Red -NoNewline
+Write-Host " - https://short.pellesnium.com/powershell-customization" -ForegroundColor DarkGray
 
 $ErrorActionPreference = 'Stop'
 $isWindowsHost = [System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform([System.Runtime.InteropServices.OSPlatform]::Windows)
@@ -217,8 +239,11 @@ if ($runningOnWindows) {
 }
 
 Write-Host ''
-Write-Host '  PowerShell Customization' -ForegroundColor Cyan
-Write-Host '  ------------------------' -ForegroundColor DarkCyan
+Write-Host '  PowerShell' -ForegroundColor Cyan -NoNewline
+Write-Host ' Customization' -ForegroundColor DarkMagenta
+Write-Host '  ----------' -ForegroundColor Cyan -NoNewline
+Write-Host '-' -ForegroundColor White -NoNewline
+Write-Host '-------------' -ForegroundColor DarkMagenta
 Write-Host 'The following files may be created or changed:' -ForegroundColor White
 foreach ($file in $installFiles) {
   $displayPath = ConvertTo-HomeRelativePath -Path $file.Destination
@@ -278,14 +303,21 @@ else {
   Write-Host 'Installation complete!' -ForegroundColor Green
   Write-Host 'Manual customization:' -ForegroundColor White
   Write-Host '  • Edit the PowerShell profile to change your prompt and shell behavior:' -ForegroundColor Gray
-  Write-Host "    → '$profileDestination'" -ForegroundColor Gray
+  Write-Host "    → '$(ConvertTo-HomeRelativePath($profileDestination))'" -ForegroundColor Gray
   Write-Host '  • Edit the Fastfetch config to change modules, colors, and logo settings.' -ForegroundColor Gray
-  Write-Host "    → '$configDestination'" -ForegroundColor Gray
+  Write-Host "    → '$(ConvertTo-HomeRelativePath($configDestination))'" -ForegroundColor Gray
   if ($runningOnWindows) {
     Write-Host '  • Edit the installed Fastfetch ASCII Logo.' -ForegroundColor Gray
-    Write-Host "    → '$logoDestination'" -ForegroundColor Gray
+    Write-Host "    → '$(ConvertTo-HomeRelativePath($logoDestination))'" -ForegroundColor Gray
   }
   Write-Host "  • `e[4mRestart PowerShell to load profile changes.`e[0m" -ForegroundColor Magenta
   Write-Host 'Fastfetch configuration guide: https://github.com/fastfetch-cli/fastfetch/wiki/Configuration' -ForegroundColor Cyan
-  Write-Host 'Further Customization guide: https://short.pellesnium.com/powershell_customization' -ForegroundColor Cyan
+  Write-Host 'Further customization guide: https://short.pellesnium.com/powershell-customization' -ForegroundColor Cyan
+}
+
+if ($LoadNow -or (-not $Y -and (Confirm-Action -Prompt 'Do you want to load the installed PowerShell Profile now?'))) {
+  Write-Host ""
+  . $profileDestination
+  Write-Host "Loaded $(ConvertTo-HomeRelativePath($profileDestination))" -ForegroundColor Green
+  return
 }
