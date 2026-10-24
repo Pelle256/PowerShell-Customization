@@ -14,20 +14,20 @@ if ($PSVersionTable.Platform -eq 'Win32NT') {
 fastfetch
 Write-Host "" # Empty Line
 
+$isElevated = $false
+if ($os -eq 'windows') {
+  $isElevated = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+}
+else {
+  # Linux / Unix: check if UID is 0 (root) or user belongs to the sudo group
+  $isRoot = (id -u) -eq 0
+  $isInSudoGroup = (groups) -split '\s+' -contains 'sudo'
+  $isElevated = $isRoot -or $isInSudoGroup
+}
+
 # Custom prompt
 function prompt {
-  $isElevated = $false
-  if ($os -eq 'windows') {
-    $isElevated = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-    $elevatedSegment = "ADMIN"
-  }
-  else {
-    # Linux / Unix: check if UID is 0 (root) or user belongs to the sudo group
-    $isRoot = (id -u) -eq 0
-    $isInSudoGroup = (groups) -split '\s+' -contains 'sudo'
-    $isElevated = $isRoot -or $isInSudoGroup
-    $elevatedSegment = "SUDO"
-  }
+  $elevatedSegment = if ($os -eq 'windows') { "ADMIN" } else { "SUDO" }
   $elevatedSegment = if ($isElevated) { "$($Styles.White)$($Styles.BgRed)[$($elevatedSegment)]$($Styles.Reset) " } else { "" }
 
   $time = Get-Date -Format "HH:mm:ss"
@@ -139,7 +139,7 @@ if($os -eq "windows"){
         "\\$MachineName\pipe\"
       }
 
-      # Query the named pipe namespace via .NET IO
+      # Query the named pipe namespace via IO directly (uses SMB under the hood)
       $pipePaths = [System.IO.Directory]::GetFiles($targetPath, $Filter)
           
       $pipePaths | ForEach-Object {

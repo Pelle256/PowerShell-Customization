@@ -1,3 +1,5 @@
+#Requires -Version 7.0
+
 [CmdletBinding()]
 param(
   [switch]$Y,
@@ -7,7 +9,23 @@ param(
   [ValidateSet('Windows', 'Linux')]
   [string]$Platform,
   [switch]$LoadNow
-)
+  )
+
+$ErrorActionPreference = 'Stop'
+$isWindowsHost = [System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform([System.Runtime.InteropServices.OSPlatform]::Windows)
+$isLinuxHost = [System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform([System.Runtime.InteropServices.OSPlatform]::Linux)
+
+function Confirm-Action {
+  param([string]$Prompt)
+
+  $answer = Read-Host "$Prompt [y/N]"
+  return $answer -match '^(?i)y(es)?$'
+}
+
+if ($PSVersionTable.PSVersion.Major -lt 7) {
+  Write-Host "This script requires PowerShell 7 or newer. The current version is $($PSVersionTable.PSVersion)." -ForegroundColor Yellow
+  return
+}
 
 Write-Host ""
 Write-Host "           ██████╗  ██████╗ ██╗    ██╗███████╗██████╗ ███████╗██╗  ██╗███████╗██╗     ██╗               " -ForegroundColor Cyan
@@ -30,9 +48,6 @@ Write-Host " - https://short.pellesnium.com/github" -ForegroundColor DarkGray
 Write-Host "GitHub repository: Pelle256/PowerShell-Customization" -ForegroundColor Red -NoNewline
 Write-Host " - https://short.pellesnium.com/powershell-customization" -ForegroundColor DarkGray
 
-$ErrorActionPreference = 'Stop'
-$isWindowsHost = [System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform([System.Runtime.InteropServices.OSPlatform]::Windows)
-$isLinuxHost = [System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform([System.Runtime.InteropServices.OSPlatform]::Linux)
 $runningOnWindows = if ($Platform) {
   $Platform -eq 'Windows'
 }
@@ -83,13 +98,6 @@ function Resolve-InstallPath {
   return [System.IO.Path]::GetFullPath($path)
 }
 
-function Confirm-Action {
-  param([string]$Prompt)
-
-  $answer = Read-Host "$Prompt [y/N]"
-  return $answer -match '^(?i)y(es)?$'
-}
-
 function Install-Fastfetch {
   if (Get-Command -Name 'fastfetch' -ErrorAction SilentlyContinue) {
     Write-Host 'Fastfetch is already installed.' -ForegroundColor Green
@@ -135,7 +143,7 @@ function Install-Fastfetch {
   }
 
   if ($null -eq $packageManager) {
-    throw 'Fastfetch is not installed and no supported Linux package manager was found (apt-get, dnf, pacman, zypper, apk, xbps-install, or emerge).'
+    throw "Fastfetch is not installed and no supported Linux package manager was found (apt-get, dnf, pacman, zypper, apk, xbps-install, or emerge)."
   }
   $packageManagerName = $packageManager.Name
 
@@ -303,21 +311,23 @@ else {
   Write-Host 'Installation complete!' -ForegroundColor Green
   Write-Host 'Manual customization:' -ForegroundColor White
   Write-Host '  • Edit the PowerShell profile to change your prompt and shell behavior:' -ForegroundColor Gray
-  Write-Host "    → '$(ConvertTo-HomeRelativePath($profileDestination))'" -ForegroundColor Gray
+  Write-Host "    → '$(ConvertTo-HomeRelativePath -Path $profileDestination)'" -ForegroundColor Gray
   Write-Host '  • Edit the Fastfetch config to change modules, colors, and logo settings.' -ForegroundColor Gray
-  Write-Host "    → '$(ConvertTo-HomeRelativePath($configDestination))'" -ForegroundColor Gray
+  Write-Host "    → '$(ConvertTo-HomeRelativePath -Path $configDestination)'" -ForegroundColor Gray
   if ($runningOnWindows) {
     Write-Host '  • Edit the installed Fastfetch ASCII Logo.' -ForegroundColor Gray
-    Write-Host "    → '$(ConvertTo-HomeRelativePath($logoDestination))'" -ForegroundColor Gray
+    Write-Host "    → '$(ConvertTo-HomeRelativePath -Path $logoDestination)'" -ForegroundColor Gray
   }
-  Write-Host "  • `e[4mRestart PowerShell to load profile changes.`e[0m" -ForegroundColor Magenta
+  if(-not $LoadNow){
+    Write-Host "  • `e[4mRestart PowerShell to load profile changes.`e[0m" -ForegroundColor Magenta
+  }
   Write-Host 'Fastfetch configuration guide: https://github.com/fastfetch-cli/fastfetch/wiki/Configuration' -ForegroundColor Cyan
   Write-Host 'Further customization guide: https://short.pellesnium.com/powershell-customization' -ForegroundColor Cyan
 }
 
-if ($LoadNow -or (-not $Y -and (Confirm-Action -Prompt 'Do you want to load the installed PowerShell Profile now?'))) {
+if ($LoadNow -or (-not $Y -and (Confirm-Action -Prompt "Do you want to load the installed PowerShell Profile now?"))) {
   Write-Host ""
   . $profileDestination
-  Write-Host "Loaded $(ConvertTo-HomeRelativePath($profileDestination))" -ForegroundColor Green
+  Write-Host "Loaded $(ConvertTo-HomeRelativePath -Path $profileDestination)" -ForegroundColor Green
   return
 }
