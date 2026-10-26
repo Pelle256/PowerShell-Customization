@@ -200,7 +200,7 @@ function Set-FastfetchLogo {
     }
     $logoColor = [System.Text.Json.Nodes.JsonObject]$logo['color']
     $logoColor['1'] = [System.Text.Json.Nodes.JsonValue]::Create('cyan')
-    $logoColor['2'] = [System.Text.Json.Nodes.JsonValue]::Create('#C19C00')
+    $logoColor['2'] = [System.Text.Json.Nodes.JsonValue]::Create('yellow')
     $logoColor['3'] = [System.Text.Json.Nodes.JsonValue]::Create('green')
     $logoColor['4'] = [System.Text.Json.Nodes.JsonValue]::Create('red')
 
